@@ -1,0 +1,67 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type ImgProducts {
+  url: String!
+  alt: String!
+}
+
+type CategoryProducts {
+  id: ID!
+  name: String!
+}
+
+type ProdctsM {
+  id: ID!
+  name: String!
+  description: String
+  date_update: String!
+  img_product: [ImgProducts!]!
+  category_Products: [CategoryProducts!]!
+}
+
+type Query {
+  prodctsMs: [ProdctsM!]!
+  prodctsM(id: Int!): ProdctsM!
+  findOneCategory(value: FindByValueInput!): CategoryProducts!
+  findAllCategories: [CategoryProducts!]!
+}
+
+input FindByValueInput {
+  id: Int
+  name: String
+}
+
+type Mutation {
+  createProdctsM(createProdctsMInput: CreateProdctsMInput!): ProdctsM!
+  updateProdctsM(updateProdctsMInput: UpdateProdctsMInput!): ProdctsM!
+  removeProdctsM(id: Int!): ProdctsM!
+  createCategory(createCategoryProducts: CategoryProductsInput!): CategoryProducts!
+}
+
+input CreateProdctsMInput {
+  name: String!
+  description: String
+  price: Float!
+  img_Products: [ImgProductsInput!]!
+  categoryProducts: CategoryProductsInput!
+}
+
+input ImgProductsInput {
+  url: String!
+  alt: String!
+}
+
+input CategoryProductsInput {
+  name: String!
+}
+
+input UpdateProdctsMInput {
+  name: String
+  description: String
+  price: Float
+  img_Products: [ImgProductsInput!]
+  categoryProducts: CategoryProductsInput
+  id: ID!
+}
