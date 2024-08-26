@@ -8,7 +8,7 @@ import { UpdateProdctsMInput, CreateProdctsMInput } from './dto/inputs';
 export class ProdctsMsResolver {
   constructor(private readonly prodctsMsService: ProdctsMsService) {}
 
-  @Mutation(() => ProdctsM)
+  @Mutation(() => ProdctsM, { name: 'createProducts' })
   async createProdctsM(
     @Args('createProdctsMInput') createProdctsMInput: CreateProdctsMInput,
   ): Promise<ProdctsM> {

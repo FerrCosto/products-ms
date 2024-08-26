@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field, ID, Float } from '@nestjs/graphql';
 import { ImgProducts } from '.';
 import { CategoryProducts } from 'src/category-products/entities/category-product.entity';
 
@@ -8,13 +8,14 @@ export class ProdctsM {
   id: number;
   @Field(() => String)
   name: string;
-  @Field(() => String)
   @Field(() => String, { nullable: true })
   description?: string;
   @Field(() => String)
   date_update: string;
+  @Field(() => String)
+  price: string;
   @Field(() => [ImgProducts])
-  img_product: ImgProducts[];
-  @Field(() => [CategoryProducts])
-  categoryproducts: CategoryProducts[];
+  img_products: ImgProducts[];
+  @Field(() => CategoryProducts)
+  categoryproducts: CategoryProducts;
 }

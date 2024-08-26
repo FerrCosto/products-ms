@@ -18,8 +18,22 @@ model products {
   name                String            @db.VarChar(50)
   description         String?           @db.VarChar(150)
   date_update         DateTime          @db.Date
-  img_product         String[]          @db.VarChar(150)
   id_categoryproducts Int?
   price               Decimal           @db.Decimal(10, 2)
+  img_products        img_products[]
   categoryproducts    categoryproducts? @relation(fields: [id_categoryproducts], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model img_products {
+  id          Int         @id @default(autoincrement())
+  alt         String?     @db.VarChar(50)
+  url         String      @db.VarChar(150)
+  state_image state_image
+  id_products Int?
+  products    products?   @relation(fields: [id_products], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum state_image {
+  HOVER
+  NORMAL
 }
