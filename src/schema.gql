@@ -29,8 +29,8 @@ type ProdctsM {
 }
 
 type Query {
-  prodctsMs: [ProdctsM!]!
-  prodctsM(id: Int!): ProdctsM!
+  findAllProducts: [ProdctsM!]!
+  findOneProduct(id: Int!): ProdctsM!
   findOneCategory(value: FindByValueInput!): CategoryProducts!
   findAllCategories: [CategoryProducts!]!
 }
@@ -42,7 +42,7 @@ input FindByValueInput {
 
 type Mutation {
   createProducts(createProdctsMInput: CreateProdctsMInput!): ProdctsM!
-  updateProdctsM(updateProdctsMInput: UpdateProdctsMInput!): ProdctsM!
+  updateProduct(updateProdctsMInput: UpdateProdctsMInput!): ProdctsM!
   removeProdctsM(id: Int!): ProdctsM!
   createCategory(createCategoryProducts: CategoryProductsInput!): CategoryProducts!
 }
@@ -66,10 +66,17 @@ input CategoryProductsInput {
 }
 
 input UpdateProdctsMInput {
+  id: Int!
   name: String
   description: String
   price: String
-  img_Products: [ImgProductsInput!]
+  img_Products: [ImgProductsEditInput!]
   categoryProducts: CategoryProductsInput
-  id: ID!
+}
+
+input ImgProductsEditInput {
+  id: Int!
+  url: String!
+  alt: String
+  state_image: StateImage!
 }

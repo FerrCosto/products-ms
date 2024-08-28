@@ -15,20 +15,20 @@ export class ProdctsMsResolver {
     return this.prodctsMsService.create(createProdctsMInput);
   }
 
-  @Query(() => [ProdctsM], { name: 'prodctsMs' })
-  findAll() {
+  @Query(() => [ProdctsM], { name: 'findAllProducts' })
+  async findAll(): Promise<ProdctsM[]> {
     return this.prodctsMsService.findAll();
   }
 
-  @Query(() => ProdctsM, { name: 'prodctsM' })
+  @Query(() => ProdctsM, { name: 'findOneProduct' })
   findOne(@Args('id', { type: () => Int }) id: number) {
     return this.prodctsMsService.findOne(id);
   }
 
-  @Mutation(() => ProdctsM)
+  @Mutation(() => ProdctsM, { name: 'updateProduct' })
   updateProdctsM(
     @Args('updateProdctsMInput') updateProdctsMInput: UpdateProdctsMInput,
-  ) {
+  ): Promise<ProdctsM> {
     return this.prodctsMsService.update(
       updateProdctsMInput.id,
       updateProdctsMInput,
