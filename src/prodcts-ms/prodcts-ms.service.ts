@@ -148,15 +148,6 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
       : undefined;
     await this.findOne(id);
 
-    const img_Create: ImgProductsInput[] = img_Products
-      ? img_Products.filter((img) => !img.id)
-      : [];
-
-    const img_Updates: ImgProductsEditInput[] = img_Products
-      ? img_Products.filter((img) => img.id)
-      : [];
-    console.log(img_Create, img_Updates);
-
     await this.products.update({
       where: {
         id,
@@ -165,26 +156,40 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
         ...products,
         ...(price !== undefined && { price: new Decimal(price) }),
         date_update: new Date(),
-        ...(img_Updates.length > 0 && {
-          img_products: {
-            update: img_Updates.map((img) => ({
-              where: {
-                id: img.id,
-              },
-              data: img,
-            })),
-          },
-        }),
-        ...(img_Create.length > 0 && {
-          img_products: {
-            create: img_Create.map((img) => ({
-              alt: img.alt,
-              url: img.url,
-              state_image: img.state_image,
-            })),
-          },
-        }),
 
+        ...(img_Products.some((img) => img.id === null || img.id === undefined)
+          ? {
+              img_products: {
+                create: img_Products.map((img) => ({
+                  state_image: img.state_image,
+                  alt: img.alt,
+                  url: img.url,
+                })),
+              },
+            }
+          : {
+              img_products: {
+                update: img_Products.map((img) => ({
+                  where: {
+                    id: img.id,
+                  },
+                  data: img,
+                })),
+              },
+            }),
+        ...(img_Products.some(
+          (img) => img.delete === true && img.id !== null,
+        ) && {
+          img_products: {
+            deleteMany: {
+              id: {
+                in: img_Products
+                  .filter((img) => img.delete === true && img.id !== null)
+                  .map((img) => img.id),
+              },
+            },
+          },
+        }),
         ...(categoryProducts !== undefined && {
           categoryproducts: {
             connect: { id: category.id },
@@ -195,15 +200,46 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
     return await this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} prodctsM`;
-  }
-
   async findCategory(name: string) {
     const category = await this.categoryProductsService.findCategoryById({
       name: name,
     });
 
     return category;
+  }
+  async remove(id: number): Promise<ProdctsM> {
+    await this.findOne(id);
+
+    await this.products.update({
+      where: {
+        id,
+      },
+      data: {
+        img_products: {
+          deleteMany: {},
+        },
+      },
+    });
+
+    const producto = await this.products.delete({
+      where: {
+        id,
+      },
+      include: {
+        categoryproducts: true,
+        img_products: true,
+      },
+    });
+    return {
+      ...producto,
+      img_products: producto.img_products.map((img) => ({
+        alt: img.alt,
+        url: img.url,
+        state_image: img.state_image as StateImage,
+      })),
+      date_update: producto.date_update.toISOString(),
+      categoryproducts: producto.categoryproducts,
+      price: CurrencyFormatter.formatCurrency(producto.price.toNumber()),
+    };
   }
 }

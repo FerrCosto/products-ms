@@ -43,8 +43,9 @@ input FindByValueInput {
 type Mutation {
   createProducts(createProdctsMInput: CreateProdctsMInput!): ProdctsM!
   updateProduct(updateProdctsMInput: UpdateProdctsMInput!): ProdctsM!
-  removeProdctsM(id: Int!): ProdctsM!
+  deleteProduct(id: Int!): ProdctsM!
   createCategory(createCategoryProducts: CategoryProductsInput!): CategoryProducts!
+  deleteCategory(name: String!): CategoryProducts!
 }
 
 input CreateProdctsMInput {
@@ -56,6 +57,7 @@ input CreateProdctsMInput {
 }
 
 input ImgProductsInput {
+  id: Int!
   url: String!
   alt: String
   state_image: StateImage!
@@ -75,8 +77,9 @@ input UpdateProdctsMInput {
 }
 
 input ImgProductsEditInput {
-  id: Int!
-  url: String!
+  id: Int
+  url: String
   alt: String
-  state_image: StateImage!
+  state_image: StateImage
+  delete: Boolean = false
 }

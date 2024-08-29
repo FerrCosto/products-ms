@@ -35,8 +35,10 @@ export class ProdctsMsResolver {
     );
   }
 
-  @Mutation(() => ProdctsM)
-  removeProdctsM(@Args('id', { type: () => Int }) id: number) {
+  @Mutation(() => ProdctsM, { name: 'deleteProduct' })
+  async removeProdctsM(
+    @Args('id', { type: () => Int }) id: number,
+  ): Promise<ProdctsM> {
     return this.prodctsMsService.remove(id);
   }
 }

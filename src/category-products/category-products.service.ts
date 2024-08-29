@@ -54,4 +54,13 @@ export class CategoryProductsService
 
     return category;
   }
+
+  async deleteCategory(name: string): Promise<CategoryProducts> {
+    const category = await this.findCategoryById({ name });
+    return await this.categoryproducts.delete({
+      where: {
+        id: category.id,
+      },
+    });
+  }
 }

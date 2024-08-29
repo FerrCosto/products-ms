@@ -28,4 +28,11 @@ export class CategoryProductsResolver {
   async findCategoriesProducts(): Promise<CategoryProducts[]> {
     return this.categoryProductsService.findCategoriesProducts();
   }
+
+  @Mutation(() => CategoryProducts, { name: 'deleteCategory' })
+  async deleteCategory(
+    @Args('name', { type: () => String }) name: string,
+  ): Promise<CategoryProducts> {
+    return this.categoryProductsService.deleteCategory(name);
+  }
 }
