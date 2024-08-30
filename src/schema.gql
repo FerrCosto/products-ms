@@ -3,6 +3,7 @@
 # ------------------------------------------------------
 
 type ImgProducts {
+  id: Int!
   url: String!
   alt: String
   state_image: StateImage!
@@ -57,7 +58,6 @@ input CreateProdctsMInput {
 }
 
 input ImgProductsInput {
-  id: Int!
   url: String!
   alt: String
   state_image: StateImage!

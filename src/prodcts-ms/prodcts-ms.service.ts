@@ -11,7 +11,6 @@ import { ProdctsM } from './entities';
 import { StateImage } from './enums/state-image.enum';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CurrencyFormatter } from 'src/helpers';
-import { CategoryProductsInput } from 'src/category-products/dto/inputs/category-products.input';
 
 @Injectable()
 export class ProdctsMsService extends PrismaClient implements OnModuleInit {
@@ -80,6 +79,7 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
     return productos.map((producto) => ({
       ...producto,
       img_products: producto.img_products.map((img) => ({
+        id: img.id,
         alt: img.alt,
         url: img.url,
         state_image: img.state_image as StateImage,
@@ -122,6 +122,7 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
     return {
       ...producto,
       img_products: producto.img_products.map((img) => ({
+        id: img.id,
         alt: img.alt,
         url: img.url,
         state_image: img.state_image as StateImage,
@@ -233,6 +234,7 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
     return {
       ...producto,
       img_products: producto.img_products.map((img) => ({
+        id: img.id,
         alt: img.alt,
         url: img.url,
         state_image: img.state_image as StateImage,

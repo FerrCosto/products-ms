@@ -1,10 +1,8 @@
-import { Field, InputType, Int } from '@nestjs/graphql';
+import { Field, InputType } from '@nestjs/graphql';
 import { StateImage } from 'src/prodcts-ms/enums/state-image.enum';
 
 @InputType()
 export class ImgProductsInput {
-  @Field(() => Int)
-  id?: number;
   @Field(() => String)
   url: string;
   @Field(() => String, { nullable: true })
