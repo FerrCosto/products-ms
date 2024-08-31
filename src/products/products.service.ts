@@ -1,30 +1,72 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import {
-  UpdateProdctsMInput,
-  CreateProdctsMInput,
-  ImgProductsEditInput,
-  ImgProductsInput,
-} from './dto/inputs';
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
+import { UpdateProdctsMInput, CreateProdctsDto } from './dto';
 import { PrismaClient } from '@prisma/client';
-import { CategoryProductsService } from 'src/category-products/category-products.service';
-import { ProdctsM } from './entities';
-import { StateImage } from './enums/state-image.enum';
+
+import { CategoryProducts, ProductsInterface } from './interfaces';
+import { StateImage } from '../products/enums/state-image.enum';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CurrencyFormatter } from 'src/helpers';
+import { CategoryProductsDto, FindByValueInput } from './dto/category';
 
 @Injectable()
-export class ProdctsMsService extends PrismaClient implements OnModuleInit {
-  constructor(
-    private readonly categoryProductsService: CategoryProductsService,
-  ) {
+export class ProductsService extends PrismaClient implements OnModuleInit {
+  constructor() {
     super();
   }
   async onModuleInit() {
     await this.$connect();
   }
 
-  async create(createProdctsMInput: CreateProdctsMInput): Promise<ProdctsM> {
-    const { categoryProducts, img_Products, ...resData } = createProdctsMInput;
+  //? Categoria
+  async createCategory(
+    categoryProductsDto: CategoryProductsDto,
+  ): Promise<CategoryProductsDto> {
+    const category = await this.categoryproducts.create({
+      data: categoryProductsDto,
+    });
+    return category;
+  }
+
+  async findCategoriesProducts(): Promise<CategoryProducts[]> {
+    const categories = await this.categoryproducts.findMany();
+    return categories;
+  }
+
+  async findCategoryById(value: FindByValueInput): Promise<CategoryProducts> {
+    if (!value || (!value.id && !value.name))
+      throw new BadRequestException('Debes ingresar el id o el name');
+
+    const { id, name } = value;
+
+    const category = await this.categoryproducts.findFirst({
+      where: {
+        OR: [{ id }, { name: { contains: name, mode: 'insensitive' } }],
+      },
+    });
+    if (!category)
+      throw new NotFoundException(
+        `Category with ${id ? `#${id}` : `name: '${name}'`} not found`,
+      );
+
+    return category;
+  }
+
+  async deleteCategory(name: string): Promise<CategoryProducts> {
+    const category = await this.findCategoryById({ name });
+    return await this.categoryproducts.delete({
+      where: {
+        id: category.id,
+      },
+    });
+  }
+
+  async create(createProdctsDto: CreateProdctsDto): Promise<ProductsInterface> {
+    const { categoryProducts, img_Products, ...resData } = createProdctsDto;
     // const category = await this.categoryProductsService.findCategoryById();
 
     const category = await this.findCategory(categoryProducts.name);
@@ -50,7 +92,7 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
     return await this.findOne(producto.id);
   }
 
-  async findAll(): Promise<ProdctsM[]> {
+  async findAll(): Promise<ProductsInterface[]> {
     const productos = await this.products.findMany({
       select: {
         id: true,
@@ -90,7 +132,7 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
     }));
   }
 
-  async findOne(id: number): Promise<ProdctsM> {
+  async findOne(id: number): Promise<ProductsInterface> {
     const producto = await this.products.findUnique({
       where: { id },
       select: {
@@ -136,7 +178,7 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
   async update(
     id: number,
     updateProdctsMInput: UpdateProdctsMInput,
-  ): Promise<ProdctsM> {
+  ): Promise<ProductsInterface> {
     const {
       categoryProducts,
       id: idProduct,
@@ -202,13 +244,13 @@ export class ProdctsMsService extends PrismaClient implements OnModuleInit {
   }
 
   async findCategory(name: string) {
-    const category = await this.categoryProductsService.findCategoryById({
+    const category = await this.findCategoryById({
       name: name,
     });
 
     return category;
   }
-  async remove(id: number): Promise<ProdctsM> {
+  async remove(id: number): Promise<ProductsInterface> {
     await this.findOne(id);
 
     await this.products.update({
