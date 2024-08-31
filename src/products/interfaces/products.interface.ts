@@ -1,5 +1,5 @@
 import { ImgProducts } from '.';
-import { CategoryProductsDto } from '../dto/category';
+import { CategoryProductsDto } from '../dtos/category';
 
 export interface ProductsInterface {
   id: number;

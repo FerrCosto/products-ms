@@ -4,14 +4,14 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
-import { UpdateProdctsMInput, CreateProdctsDto } from './dto';
+import { UpdateProdctsMInput, CreateProdctsDto } from './dtos';
 import { PrismaClient } from '@prisma/client';
 
 import { CategoryProducts, ProductsInterface } from './interfaces';
 import { StateImage } from '../products/enums/state-image.enum';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CurrencyFormatter } from 'src/helpers';
-import { CategoryProductsDto, FindByValueInput } from './dto/category';
+import { CategoryProductsDto, FindByValueInput } from './dtos/category';
 
 @Injectable()
 export class ProductsService extends PrismaClient implements OnModuleInit {
