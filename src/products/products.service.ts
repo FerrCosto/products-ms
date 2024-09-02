@@ -12,6 +12,7 @@ import { StateImage } from '../products/enums/state-image.enum';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CurrencyFormatter } from 'src/helpers';
 import { CategoryProductsDto, FindByValueInput } from './dtos/category';
+import { envs } from 'src/config/envs.config';
 
 @Injectable()
 export class ProductsService extends PrismaClient implements OnModuleInit {
@@ -20,6 +21,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
   }
   async onModuleInit() {
     await this.$connect();
+    console.log('Conectado a la base de datos', envs.database_url);
   }
 
   //? Categoria

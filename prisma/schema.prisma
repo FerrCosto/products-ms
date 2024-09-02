@@ -5,12 +5,14 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+ 
 }
 
 model categoryproducts {
   id       Int        @id @default(autoincrement())
   name     String     @db.VarChar(50)
   products products[]
+  
 }
 
 model products {
