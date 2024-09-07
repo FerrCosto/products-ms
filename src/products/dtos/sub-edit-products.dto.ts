@@ -16,13 +16,13 @@ export class ImgProductsEditDto {
 
   @IsString()
   @IsOptional()
-  url: string;
+  url?: string;
 
   alt?: string;
 
   @IsEnum(() => StateImage)
   @IsOptional()
-  state_image: StateImage;
+  state_image?: StateImage;
 
   @IsBoolean()
   @IsOptional()

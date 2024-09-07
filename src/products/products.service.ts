@@ -218,7 +218,11 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
                   where: {
                     id: img.id,
                   },
-                  data: img,
+                  data: {
+                    state_image: img.state_image,
+                    alt: img.alt,
+                    url: img.url,
+                  },
                 })),
               },
             }),
