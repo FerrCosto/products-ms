@@ -13,6 +13,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { CurrencyFormatter } from 'src/helpers';
 import { CategoryProductsDto, FindByValueInput } from './dtos/category';
 import { envs } from 'src/config/envs.config';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class ProductsService extends PrismaClient implements OnModuleInit {
@@ -161,7 +162,11 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       },
     });
 
-    if (!producto) throw new NotFoundException(`Product with #${id} not found`);
+    if (!producto)
+      throw new RpcException({
+        status: 400,
+        message: `Product with #${id} not found`,
+      });
 
     return {
       ...producto,
