@@ -54,4 +54,9 @@ export class ProductsController {
   deleteProduct(id: number) {
     return this.productsService.remove(id);
   }
+
+  @MessagePattern('products.validate')
+  validateProducts(ids: number[]) {
+    return this.productsService.validateProducts(ids);
+  }
 }
