@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpStatus,
   Injectable,
   NotFoundException,
   OnModuleInit,
@@ -311,8 +310,8 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
 
     if (products.length !== ids.length) {
       throw new RpcException({
+        status: 400,
         message: 'Some products were not found',
-        status: HttpStatus.BAD_REQUEST,
       });
     }
 
