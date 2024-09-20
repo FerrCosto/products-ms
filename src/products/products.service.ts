@@ -306,6 +306,9 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
           in: ids,
         },
       },
+      include: {
+        img_products: true,
+      },
     });
 
     if (products.length !== ids.length) {
