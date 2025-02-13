@@ -69,14 +69,21 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
   }
 
   async create(createProdctsDto: CreateProdctsDto): Promise<ProductsInterface> {
-    const { categoryProducts, img_Products, ...resData } = createProdctsDto;
+    const { categoryProducts, name, img_Products, ...resData } =
+      createProdctsDto;
     // const category = await this.categoryProductsService.findCategoryById();
 
     const category = await this.findCategory(categoryProducts.name);
-
+    const slug = name
+      .trim()
+      .toLocaleLowerCase()
+      .replaceAll(' ', '_')
+      .replaceAll("'", '');
     const producto = await this.products.create({
       data: {
         ...resData,
+        name,
+        slug,
         date_update: new Date(),
         price: new Decimal(resData.price),
         img_products: {
@@ -104,6 +111,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         date_update: true,
         id_categoryproducts: false,
         price: true,
+        slug: true,
         img_products: {
           select: {
             id: true,
@@ -145,6 +153,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         date_update: true,
         id_categoryproducts: false,
         price: true,
+        slug: true,
         img_products: {
           select: {
             id: true,
@@ -166,6 +175,54 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       throw new RpcException({
         status: 400,
         message: `Product with #${id} not found`,
+      });
+
+    return {
+      ...producto,
+      img_products: producto.img_products.map((img) => ({
+        id: img.id,
+        alt: img.alt,
+        url: img.url,
+        state_image: img.state_image as StateImage,
+      })),
+      date_update: producto.date_update.toISOString(),
+      categoryproducts: producto.categoryproducts,
+      price: CurrencyFormatter.formatCurrency(producto.price.toNumber()),
+    };
+  }
+
+  async findOneBySlug(slug: string): Promise<ProductsInterface> {
+    const producto = await this.products.findFirst({
+      where: { slug },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        date_update: true,
+        id_categoryproducts: false,
+        price: true,
+        slug: true,
+        img_products: {
+          select: {
+            id: true,
+            alt: true,
+            state_image: true,
+            url: true,
+          },
+        },
+        categoryproducts: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!producto)
+      throw new RpcException({
+        status: 400,
+        message: `Product with "${slug}" not found`,
       });
 
     return {

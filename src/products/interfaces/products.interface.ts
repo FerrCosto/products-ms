@@ -8,6 +8,8 @@ export interface ProductsInterface {
 
   description?: string;
 
+  slug: string;
+
   date_update: string;
 
   price: string;

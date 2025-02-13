@@ -42,6 +42,11 @@ export class ProductsController {
     return this.productsService.findOne(id);
   }
 
+  @MessagePattern('product.findOneBySlug')
+  findOneBySlugProduct(slug: string) {
+    return this.productsService.findOneBySlug(slug);
+  }
+
   @MessagePattern('product.update')
   updateProduct(@Payload() updateProdctsMInput: UpdateProdctsMInput) {
     return this.productsService.update(

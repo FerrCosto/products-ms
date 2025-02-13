@@ -20,6 +20,7 @@ model products {
   id                  Int               @id @default(autoincrement())
   name                String            @db.VarChar(50)
   description         String?           @db.VarChar(150)
+  slug  String @db.VarChar(50)
   date_update         DateTime          @db.Date
   id_categoryproducts Int?
   price               Decimal           @db.Decimal(10, 2)
