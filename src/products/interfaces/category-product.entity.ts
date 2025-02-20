@@ -1,4 +1,5 @@
-export interface CategoryProducts {
-  id: number;
+export interface CategoryProductsEdit {
+  id?: number;
+  delete?: boolean;
   name: string;
 }

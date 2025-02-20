@@ -15,7 +15,7 @@ export class ProductsController {
 
   @MessagePattern('product.category.findOne')
   findCategoryById(@Payload() value: FindByValueInput) {
-    return this.productsService.findCategoryById(value);
+    return this.productsService.findCategoryByIdOrName(value);
   }
 
   @MessagePattern('product.category.finAll')

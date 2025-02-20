@@ -16,5 +16,5 @@ export interface ProductsInterface {
 
   img_products: ImgProducts[];
 
-  categoryproducts: CategoryProductsDto;
+  categoryproducts: CategoryProductsDto[];
 }

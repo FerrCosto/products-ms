@@ -1,13 +1,12 @@
 import {
   IsArray,
   IsInt,
-  IsObject,
   IsOptional,
   IsString,
   MinLength,
 } from 'class-validator';
 import { ImgProductsEditDto } from './sub-edit-products.dto';
-import { CategoryProductsDto } from './category';
+import { CategoryProductsEditDto } from './sub-edit-category.dto';
 
 export class UpdateProdctsMInput {
   @IsInt()
@@ -30,7 +29,7 @@ export class UpdateProdctsMInput {
   @IsOptional()
   img_Products?: ImgProductsEditDto[];
 
-  @IsObject()
+  @IsArray()
   @IsOptional()
-  categoryProducts?: CategoryProductsDto;
+  categoryProducts?: CategoryProductsEditDto[];
 }

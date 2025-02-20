@@ -18,6 +18,6 @@ export class CreateProdctsDto {
   price: string;
   @IsArray()
   img_Products: ImgProducts[];
-  @IsObject()
-  categoryProducts: CategoryProducts;
+  @IsArray()
+  categoryProducts: CategoryProducts[];
 }

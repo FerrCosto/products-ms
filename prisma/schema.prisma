@@ -9,14 +9,13 @@ datasource db {
  
 }
 
-model categoryproducts {
+model category {
   id       Int        @id @default(autoincrement())
   name     String     @db.VarChar(50)
-  products products[]
-  
+  products product_category[]  
 }
 
-model products {
+model product {
   id                  Int               @id @default(autoincrement())
   name                String            @db.VarChar(50)
   description         String?           @db.VarChar(150)
@@ -25,7 +24,8 @@ model products {
   id_categoryproducts Int?
   price               Decimal           @db.Decimal(10, 2)
   img_products        img_products[]
-  categoryproducts    categoryproducts? @relation(fields: [id_categoryproducts], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categories product_category[]
+
 }
 
 model img_products {
@@ -34,7 +34,18 @@ model img_products {
   url         String      @db.VarChar(150)
   state_image state_image
   id_products Int?
-  products    products?   @relation(fields: [id_products], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  products    product?   @relation(fields: [id_products], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+
+model product_category {
+  productId Int
+  categoryId Int
+  product    product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  categories   category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+
 }
 
 enum state_image {
