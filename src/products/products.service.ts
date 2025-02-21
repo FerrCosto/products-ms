@@ -280,6 +280,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     await this.findOne(id);
 
     console.log({ categoryDelete });
+
     await this.product.update({
       where: {
         id,
@@ -329,7 +330,9 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
           }),
         ...(categoryProducts !== undefined &&
           category.some(
-            (category) => category.id !== null || category.id !== undefined,
+            (category) =>
+              (category.id !== null || category.id !== undefined) &&
+              category.delete === false,
           ) && {
             categories: {
               create: await Promise.all(
@@ -372,14 +375,13 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
             },
           }),
         ...(categoryProducts !== undefined &&
-          category.some(
-            (category) => category.id !== null && category.delete === true,
-          ) && {
+          categoryDelete.length > 0 && {
             categories: {
-              deleteMany: categoryDelete.map((category) => ({
-                productId: id,
-                categoryId: category.id,
-              })),
+              deleteMany: {
+                categoryId: {
+                  in: categoryDelete.map((category) => category.id),
+                },
+              },
             },
           }),
       },
