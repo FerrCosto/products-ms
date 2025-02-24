@@ -2,7 +2,9 @@ import {
   IsArray,
   IsInt,
   IsOptional,
+  IsPositive,
   IsString,
+  Min,
   MinLength,
 } from 'class-validator';
 import { ImgProductsEditDto } from './sub-edit-products.dto';
@@ -17,6 +19,11 @@ export class UpdateProdctsMInput {
   @MinLength(1)
   name?: string;
 
+  @IsInt()
+  @Min(5)
+  @IsPositive()
+  @IsOptional()
+  inStock?: number;
   @IsOptional()
   @IsString()
   description?: string;

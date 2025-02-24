@@ -1,8 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern, Payload, EventPattern } from '@nestjs/microservices';
 import { CreateProdctsDto, UpdateProdctsMInput } from './dtos';
 import { CategoryProductsDto, FindByValueInput } from './dtos/category';
+import { UpdateProductStockDto } from './dtos/update-stock.product.dto';
 
 @Controller()
 export class ProductsController {
@@ -61,7 +62,12 @@ export class ProductsController {
   }
 
   @MessagePattern('products.validate')
-  validateProducts(ids: number[]) {
-    return this.productsService.validateProducts(ids);
+  validateProducts(updateProductStockDto: UpdateProductStockDto[]) {
+    return this.productsService.validateProducts(updateProductStockDto);
+  }
+
+  @EventPattern('product.updateStock')
+  updateStock(updateProductStockDto: UpdateProductStockDto[]) {
+    return this.productsService.updateStockProduct(updateProductStockDto);
   }
 }

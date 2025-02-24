@@ -20,9 +20,10 @@ model product {
   name                String            @db.VarChar(50)
   description         String?           @db.VarChar(150)
   slug  String @db.VarChar(50)
-  date_update         DateTime          @db.Date
-  id_categoryproducts Int?
+  inStock Int  @db.Integer
   price               Decimal           @db.Decimal(10, 2)
+  create_at DateTime @db.Date
+  date_update         DateTime          @updatedAt
   img_products        img_products[]
   categories product_category[]
 

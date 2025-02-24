@@ -5,7 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { UpdateProdctsMInput, CreateProdctsDto } from './dtos';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, product } from '@prisma/client';
 
 import { CategoryProducts, ProductsInterface } from './interfaces';
 import { StateImage } from '../products/enums/state-image.enum';
@@ -15,6 +15,7 @@ import { CategoryProductsDto, FindByValueInput } from './dtos/category';
 import { envs } from 'src/config/envs.config';
 import { RpcException } from '@nestjs/microservices';
 import { CategoryProductsEdit } from './interfaces/category-product.entity';
+import { UpdateProductStockDto } from './dtos/update-stock.product.dto';
 
 @Injectable()
 export class ProductsService extends PrismaClient implements OnModuleInit {
@@ -26,7 +27,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     console.log('Conectado a la base de datos', envs.database_url);
   }
 
-  //? Categoria
+  // TODO: Creacion de la categoria
   async createCategory(
     categoryProductsDto: CategoryProductsDto,
   ): Promise<CategoryProductsDto> {
@@ -36,10 +37,14 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     return category;
   }
 
+  // TODO: Encontrar categoria de los productos
+
   async findCategoriesProducts(): Promise<CategoryProducts[]> {
     const categories = await this.category.findMany();
     return categories;
   }
+
+  // TODO: EncontrarCategoria por nombre o nombre
 
   async findCategoryByIdOrName(
     value: FindByValueInput,
@@ -62,6 +67,8 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     return category;
   }
 
+  // TODO: Encontrar categoria por nombre
+
   async findCategoriesByName(names: string[]): Promise<CategoryProducts[]> {
     const categories = await Promise.all(
       names.map((name) => this.category.findFirst({ where: { name } })),
@@ -69,6 +76,8 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     return categories;
   }
 
+  // TODO: Eliminar categoria
+  //! Solo si no esta relacionada a productos si no no se puede eliminar
   async deleteCategory(name: string): Promise<CategoryProducts> {
     const category = await this.findCategoryByIdOrName({ name });
     return await this.category.delete({
@@ -78,8 +87,9 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     });
   }
 
+  // TODO: Crear Producto
   async create(createProdctsDto: CreateProdctsDto): Promise<ProductsInterface> {
-    const { categoryProducts, name, img_Products, ...resData } =
+    const { categoryProducts, name, img_Products, inStock, ...resData } =
       createProdctsDto;
     // const category = await this.categoryProductsService.findCategoryByIdOrName();
 
@@ -97,7 +107,8 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         ...resData,
         name,
         slug,
-        date_update: new Date(),
+        inStock: parseInt(inStock),
+        create_at: new Date(),
         price: new Decimal(resData.price),
         img_products: {
           create: img_Products.map((img) => ({
@@ -117,14 +128,15 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     return await this.findOne(producto.id);
   }
 
+  // TODO: Encontrar Productos
   async findAll(): Promise<ProductsInterface[]> {
     const productos = await this.product.findMany({
       select: {
         id: true,
         name: true,
         description: true,
+        inStock: true,
         date_update: true,
-        id_categoryproducts: false,
         price: true,
         slug: true,
         img_products: {
@@ -157,6 +169,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     }));
   }
 
+  // TODO: Encontrar producto por id
   async findOne(id: number): Promise<ProductsInterface> {
     const producto = await this.product.findUnique({
       where: { id },
@@ -164,8 +177,8 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         id: true,
         name: true,
         description: true,
+        inStock: true,
         date_update: true,
-        id_categoryproducts: false,
         price: true,
         slug: true,
         img_products: {
@@ -204,6 +217,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     };
   }
 
+  // TODO: Encontarr producto por slug
   async findOneBySlug(slug: string): Promise<ProductsInterface> {
     const producto = await this.product.findFirst({
       where: { slug },
@@ -211,8 +225,8 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         id: true,
         name: true,
         description: true,
+        inStock: true,
         date_update: true,
-        id_categoryproducts: false,
         price: true,
         slug: true,
         img_products: {
@@ -251,6 +265,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     };
   }
 
+  // TODO: Editar Producto
   async update(
     id: number,
     updateProdctsMInput: UpdateProdctsMInput,
@@ -389,6 +404,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     return await this.findOne(id);
   }
 
+  // TODO:Encontart Categoria
   async findCategory(name: string) {
     const category = await this.findCategoryByIdOrName({
       name: name,
@@ -396,6 +412,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
 
     return category;
   }
+  // TODO: Eliminar Producto
   async remove(id: number): Promise<ProductsInterface> {
     await this.findOne(id);
 
@@ -438,8 +455,10 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       price: CurrencyFormatter.formatCurrency(producto.price.toNumber()),
     };
   }
-  async validateProducts(ids: number[]) {
-    ids = Array.from(new Set(ids));
+
+  // TODO: Validar productos existen
+  async validateProducts(updateProductStock: UpdateProductStockDto[]) {
+    const ids: number[] = updateProductStock.map((prod) => prod.id);
 
     const products = await this.product.findMany({
       where: {
@@ -463,7 +482,72 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         message: 'Some products were not found',
       });
     }
+    products.map((prod) => {
+      const product = updateProductStock.find((pro) => pro.id === prod.id);
+      if (!product) {
+        throw new RpcException({
+          status: 400,
+          message: `No coinciden los productos ${prod.id}`,
+        });
+      }
 
+      if (product.quantity > prod.inStock) {
+        throw new RpcException({
+          status: 400,
+          message: `No hay suficientes productos en el stock para el producto ${prod.slug}`,
+        });
+      }
+    });
     return products;
+  }
+
+  // TODO: Tratamiento del stock cuando compran
+  //? Se trenda en cuenta que la cantidad del pedido no supere a la del stock
+
+  async updateStockProduct(updateProductStock: UpdateProductStockDto[]) {
+    try {
+      const ids: number[] = updateProductStock.map((prod) => prod.id);
+
+      const products = await this.validateProducts(updateProductStock);
+
+      const updateStock = products.map((prod) => {
+        const product = updateProductStock.find((pro) => pro.id === prod.id);
+
+        if (!product) {
+          throw new RpcException({
+            status: 400,
+            message: `No coinciden los productos ${prod.id}`,
+          });
+        }
+
+        if (product.quantity > prod.inStock) {
+          throw new RpcException({
+            status: 400,
+            message: `No hay suficientes productos en el stock para el producto ${prod.slug}`,
+          });
+        }
+        return {
+          id: prod.id,
+          inStock: prod.inStock - product.quantity,
+        };
+      });
+
+      await Promise.all(
+        updateStock.map((prod) =>
+          this.product.update({
+            where: { id: prod.id },
+            data: {
+              inStock: prod.inStock,
+            },
+          }),
+        ),
+      );
+    } catch (error) {
+      console.log(error);
+      throw new RpcException({
+        status: 500,
+        message: 'Mirar los logs',
+      });
+    }
   }
 }
