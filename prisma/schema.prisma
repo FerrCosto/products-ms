@@ -11,7 +11,7 @@ datasource db {
 
 model category {
   id       Int        @id @default(autoincrement())
-  name     String     @db.VarChar(50)
+  name     String     @db.VarChar(50) @unique
   products product_category[]  
 }
 
@@ -19,7 +19,7 @@ model product {
   id                  Int               @id @default(autoincrement())
   name                String            @db.VarChar(50)
   description         String?           @db.VarChar(150)
-  slug  String @db.VarChar(50)
+  slug  String @db.VarChar(50) @unique
   inStock Int  @db.Integer
   price               Decimal           @db.Decimal(10, 2)
   create_at DateTime @db.Date

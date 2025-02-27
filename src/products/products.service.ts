@@ -31,10 +31,26 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
   async createCategory(
     categoryProductsDto: CategoryProductsDto,
   ): Promise<CategoryProductsDto> {
-    const category = await this.category.create({
-      data: categoryProductsDto,
-    });
-    return category;
+    try {
+      const categoryOne = await this.category.findFirst({
+        where: { name: categoryProductsDto.name },
+      });
+
+      if (categoryOne) {
+        throw new RpcException({
+          status: 400,
+          message: `Already exist "${categoryProductsDto.name}" category`,
+        });
+      }
+      const category = await this.category.create({
+        data: categoryProductsDto,
+      });
+
+      return category;
+    } catch (error) {
+      console.log(error);
+      throw new RpcException(error);
+    }
   }
 
   // TODO: Encontrar categoria de los productos
@@ -89,43 +105,58 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
 
   // TODO: Crear Producto
   async create(createProdctsDto: CreateProdctsDto): Promise<ProductsInterface> {
-    const { categoryProducts, name, img_Products, inStock, ...resData } =
-      createProdctsDto;
-    // const category = await this.categoryProductsService.findCategoryByIdOrName();
+    try {
+      const { categoryProducts, name, img_Products, inStock, ...resData } =
+        createProdctsDto;
+      // const category = await this.categoryProductsService.findCategoryByIdOrName();
+      const slug = name
+        .trim()
+        .toLocaleLowerCase()
+        .replaceAll(' ', '_')
+        .replaceAll("'", '');
 
-    const category: CategoryProducts[] = await this.findCategoriesByName(
-      categoryProducts.map((cate) => cate.name),
-    );
+      const productOne = await this.product.findFirst({ where: { slug } });
+      if (productOne) {
+        throw new RpcException({
+          status: 400,
+          message: `The product ${slug} already exits`,
+        });
+      }
 
-    const slug = name
-      .trim()
-      .toLocaleLowerCase()
-      .replaceAll(' ', '_')
-      .replaceAll("'", '');
-    const producto = await this.product.create({
-      data: {
-        ...resData,
-        name,
-        slug,
-        inStock: parseInt(inStock),
-        create_at: new Date(),
-        price: new Decimal(resData.price),
-        img_products: {
-          create: img_Products.map((img) => ({
-            alt: img.alt,
-            url: img.url,
-            state_image: img.state_image,
-          })),
+      const category: CategoryProducts[] = await this.findCategoriesByName(
+        categoryProducts.map((cate) => cate.name),
+      );
+
+      const producto = await this.product.create({
+        data: {
+          ...resData,
+          name,
+          slug,
+          inStock: parseInt(inStock),
+          create_at: new Date(),
+          price: new Decimal(resData.price),
+          img_products: {
+            create: img_Products.map((img) => ({
+              alt: img.alt,
+              url: img.url,
+              state_image: img.state_image,
+            })),
+          },
+          categories: {
+            create: category.map((cate) => ({
+              categoryId: cate.id,
+            })),
+          },
         },
-        categories: {
-          create: category.map((cate) => ({
-            categoryId: cate.id,
-          })),
-        },
-      },
-    });
+      });
 
-    return await this.findOne(producto.id);
+      return await this.findOne(producto.id);
+    } catch (error) {
+      throw new RpcException({
+        status: 500,
+        message: 'Check server logs',
+      });
+    }
   }
 
   // TODO: Encontrar Productos
@@ -484,6 +515,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     }
     products.map((prod) => {
       const product = updateProductStock.find((pro) => pro.id === prod.id);
+
       if (!product) {
         throw new RpcException({
           status: 400,
@@ -491,7 +523,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         });
       }
 
-      if (product.quantity > prod.inStock) {
+      if (product.quantity > prod.inStock && !product.isFind) {
         throw new RpcException({
           status: 400,
           message: `No hay suficientes productos en el stock para el producto ${prod.slug}`,
