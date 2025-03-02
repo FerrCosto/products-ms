@@ -2,7 +2,11 @@ import { Controller } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { MessagePattern, Payload, EventPattern } from '@nestjs/microservices';
 import { CreateProdctsDto, UpdateProdctsMInput } from './dtos';
-import { CategoryProductsDto, FindByValueInput } from './dtos/category';
+import {
+  CategoryPriceProductsDto,
+  CategoryProductsDto,
+  FindByValueInput,
+} from './dtos/category';
 import { UpdateProductStockDto } from './dtos/update-stock.product.dto';
 
 @Controller()
@@ -46,6 +50,11 @@ export class ProductsController {
   @MessagePattern('product.findOneBySlug')
   findOneBySlugProduct(slug: string) {
     return this.productsService.findOneBySlug(slug);
+  }
+
+  @MessagePattern('product.findManyByCategories')
+  findManyByCategories(categoryProductsDto: CategoryPriceProductsDto) {
+    return this.productsService.findManyByCategories(categoryProductsDto);
   }
 
   @MessagePattern('product.update')

@@ -11,7 +11,11 @@ import { CategoryProducts, ProductsInterface } from './interfaces';
 import { StateImage } from '../products/enums/state-image.enum';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CurrencyFormatter } from 'src/helpers';
-import { CategoryProductsDto, FindByValueInput } from './dtos/category';
+import {
+  CategoryPriceProductsDto,
+  CategoryProductsDto,
+  FindByValueInput,
+} from './dtos/category';
 import { envs } from 'src/config/envs.config';
 import { RpcException } from '@nestjs/microservices';
 import { CategoryProductsEdit } from './interfaces/category-product.entity';
@@ -246,6 +250,82 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       categoryproducts: producto.categories.map((cate) => cate.categories),
       price: CurrencyFormatter.formatCurrency(producto.price.toNumber()),
     };
+  }
+
+  async findManyByCategories(
+    categoryProductsDto: CategoryPriceProductsDto,
+  ): Promise<ProductsInterface[]> {
+    console.log({
+      categoryProductsDto,
+      category: categoryProductsDto.categories,
+    });
+    const category = await this.category.findMany({
+      where: {
+        name: {
+          in: categoryProductsDto.categories.map((category) => category.name),
+        },
+      },
+    });
+
+    const minPrice = categoryProductsDto.price?.min
+      ? new Decimal(categoryProductsDto.price.min)
+      : undefined;
+    const maxPrice = categoryProductsDto.price?.max
+      ? new Decimal(categoryProductsDto.price.max)
+      : undefined;
+
+    console.log(category);
+
+    const categoriesIds = category.map((category) => category.id);
+    const products = await this.product.findMany({
+      where: {
+        price: {
+          ...(minPrice !== undefined && { gte: minPrice }),
+          ...(maxPrice !== undefined && { lte: maxPrice }),
+        },
+        AND: categoriesIds.map((id) => ({
+          categories: {
+            some: {
+              categoryId: id,
+            },
+          },
+        })),
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        inStock: true,
+        date_update: true,
+        price: true,
+        slug: true,
+        img_products: {
+          select: {
+            id: true,
+            alt: true,
+            state_image: true,
+            url: true,
+          },
+        },
+        categories: {
+          include: {
+            categories: true,
+          },
+        },
+      },
+    });
+    return products.map((producto) => ({
+      ...producto,
+      img_products: producto.img_products.map((img) => ({
+        id: img.id,
+        alt: img.alt,
+        url: img.url,
+        state_image: img.state_image as StateImage,
+      })),
+      date_update: producto.date_update.toISOString(),
+      categoryproducts: producto.categories.map((cate) => cate.categories),
+      price: CurrencyFormatter.formatCurrency(producto.price.toNumber()),
+    }));
   }
 
   // TODO: Encontarr producto por slug
