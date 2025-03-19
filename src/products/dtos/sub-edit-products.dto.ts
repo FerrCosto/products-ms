@@ -18,6 +18,8 @@ export class ImgProductsEditDto {
   @IsOptional()
   url?: string;
 
+  @IsString()
+  @IsOptional()
   alt?: string;
 
   @IsEnum(() => StateImage)

@@ -15,8 +15,8 @@ export class UpdateProdctsMInput {
   id: number;
 
   @IsString()
-  @IsOptional()
   @MinLength(1)
+  @IsOptional()
   name?: string;
 
   @IsInt()
@@ -24,12 +24,12 @@ export class UpdateProdctsMInput {
   @IsPositive()
   @IsOptional()
   inStock?: number;
-  @IsOptional()
   @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   price?: string;
 
   @IsArray()

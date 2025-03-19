@@ -188,6 +188,9 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
           },
         },
       },
+      orderBy: {
+        id: 'asc',
+      },
     });
 
     return productos.map((producto) => ({
@@ -313,6 +316,9 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
           },
         },
       },
+      orderBy: {
+        id: 'asc',
+      },
     });
     return products.map((producto) => ({
       ...producto,
@@ -381,138 +387,200 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     id: number,
     updateProdctsMInput: UpdateProdctsMInput,
   ): Promise<ProductsInterface> {
-    const {
-      categoryProducts,
-      id: idProduct,
-      img_Products,
-      price,
-      ...products
-    } = updateProdctsMInput;
-    console.log({ categoryProducts });
+    try {
+      const {
+        categoryProducts,
+        id: idProduct,
+        img_Products,
+        price,
+        name,
+        ...products
+      } = updateProdctsMInput;
+      console.log({ updateProdctsMInput });
+      let slug = '';
+      if (name) {
+        slug = name
+          .trim()
+          .toLocaleLowerCase()
+          .replaceAll(' ', '_')
+          .replaceAll("'", '');
 
-    const foundCategories = await this.findCategoriesByName(
-      categoryProducts.map((cate) => cate.name),
-    );
+        const productOne = await this.product.findFirst({ where: { slug } });
+        if (productOne) {
+          throw new RpcException({
+            status: 400,
+            message: `The product ${slug} already exits`,
+          });
+        }
+      }
 
-    const category: CategoryProductsEdit[] =
-      categoryProducts && foundCategories.every((c) => c !== null)
-        ? foundCategories
-        : categoryProducts.map((category) => category as CategoryProductsEdit);
+      if (categoryProducts) {
+        const foundCategories = await this.findCategoriesByName(
+          categoryProducts.map((cate) => cate.name),
+        );
 
-    console.log({ category });
-    const categoryDelete: CategoryProductsEdit[] = category.filter(
-      (category) => Boolean(category.id) && category.delete !== true,
-    );
-    await this.findOne(id);
-
-    console.log({ categoryDelete });
-
-    await this.product.update({
-      where: {
-        id,
-      },
-      data: {
-        ...products,
-        ...(price !== undefined && { price: new Decimal(price) }),
-        date_update: new Date(),
-        ...(img_Products !== undefined &&
-          (img_Products.some((img) => img.id === null || img.id === undefined)
-            ? {
-                img_products: {
-                  create: img_Products.map((img) => ({
-                    state_image: img.state_image,
-                    alt: img.alt,
-                    url: img.url,
-                  })),
-                },
-              }
-            : {
-                img_products: {
-                  update: img_Products.map((img) => ({
-                    where: {
-                      id: img.id,
+        const category: CategoryProductsEdit[] =
+          categoryProducts && foundCategories.every((c) => c !== null)
+            ? foundCategories.flatMap((cate) => {
+                return categoryProducts.map(
+                  (categ) =>
+                    cate.name === categ.name && {
+                      name: cate.name,
+                      id: cate.id,
+                      delete: categ.delete,
                     },
-                    data: {
-                      state_image: img.state_image,
-                      alt: img.alt,
-                      url: img.url,
-                    },
-                  })),
-                },
-              })),
-        ...(img_Products !== undefined &&
-          img_Products.some(
-            (img) => img.delete === true && img.id !== null,
-          ) && {
-            img_products: {
-              deleteMany: {
-                id: {
-                  in: img_Products
-                    .filter((img) => img.delete === true && img.id !== null)
-                    .map((img) => img.id),
-                },
-              },
-            },
-          }),
-        ...(categoryProducts !== undefined &&
+                );
+              })
+            : categoryProducts.map(
+                (category) => category as CategoryProductsEdit,
+              );
+
+        console.log({ category });
+        const categoryDelete: CategoryProductsEdit[] = category.filter(
+          (category) => Boolean(category.id) && category.delete,
+        );
+
+        const categoryCreate: CategoryProductsEdit[] = category.filter(
+          (category) => category.delete === false,
+        );
+        console.log({ categoryDelete });
+
+        console.log(
           category.some(
             (category) =>
               (category.id !== null || category.id !== undefined) &&
               category.delete === false,
-          ) && {
-            categories: {
-              create: await Promise.all(
-                category.map(async (cate) => {
-                  try {
-                    let foundCategory = await this.category.findFirst({
-                      where: { name: cate.name },
-                    });
+          ),
+        );
 
-                    if (!foundCategory) {
-                      const newCategory = await this.createCategory({
-                        name: cate.name,
-                      } as CategoryProductsDto);
-
-                      foundCategory = await this.category.findFirst({
-                        where: { name: newCategory.name },
-                      });
-                    }
-
-                    if (!foundCategory) {
-                      throw new RpcException({
-                        status: 400,
-                        message: `No se pudo encontrar o crear la categoría: ${cate.name}`,
-                      });
-                    }
-
-                    return { categoryId: foundCategory.id };
-                  } catch (error) {
-                    console.error(
-                      `Error al procesar la categoría ${cate.name}:`,
-                      error,
-                    );
-                    throw new RpcException({
-                      status: 500,
-                      message: `Error en la categoría ${cate.name}`,
-                    });
-                  }
-                }),
-              ),
-            },
-          }),
-        ...(categoryProducts !== undefined &&
-          categoryDelete.length > 0 && {
-            categories: {
-              deleteMany: {
-                categoryId: {
-                  in: categoryDelete.map((category) => category.id),
+        if (categoryDelete.length > 0) {
+          console.log(
+            'Eliminando categorías:',
+            categoryDelete.map((c) => c.name),
+          );
+          await Promise.all(
+            categoryDelete.map(async (category) => {
+              await this.product_category.deleteMany({
+                where: {
+                  productId: id,
+                  categoryId: category.id,
                 },
+              });
+            }),
+          );
+
+          console.log(
+            'Categorías después de eliminar:',
+            await this.product.findUnique({
+              where: { id },
+              select: { categories: true },
+            }),
+          );
+        }
+
+        if (categoryCreate.length > 0) {
+          console.log(
+            categoryCreate.length,
+            categoryCreate.map((cate) => cate.name),
+          );
+          const newCategories = await Promise.all(
+            categoryCreate.map(async (cate) => {
+              let foundCategory = await this.category.findFirst({
+                where: { name: cate.name },
+              });
+
+              if (!foundCategory) {
+                const newCategory = await this.createCategory({
+                  name: cate.name,
+                } as CategoryProductsDto);
+                foundCategory = await this.category.findFirst({
+                  where: { name: newCategory.name },
+                });
+              }
+
+              if (!foundCategory) {
+                throw new RpcException({
+                  status: 400,
+                  message: `No se pudo encontrar o crear la categoría: ${cate.name}`,
+                });
+              }
+
+              console.log({
+                categoryId: foundCategory.id,
+              });
+              return {
+                categoryId: foundCategory.id,
+              };
+            }),
+          );
+
+          await this.product.update({
+            where: { id },
+            data: {
+              categories: {
+                create: newCategories,
               },
             },
-          }),
-      },
-    });
-    return await this.findOne(id);
+          });
+        }
+      }
+
+      await this.product.update({
+        where: {
+          id,
+        },
+        data: {
+          ...products,
+          ...(name !== undefined && { name }),
+          ...(name !== undefined && { slug }),
+          ...(price !== undefined && { price: new Decimal(price) }),
+          date_update: new Date(),
+          ...(img_Products !== undefined &&
+            (img_Products.some((img) => img.id === null || img.id === undefined)
+              ? {
+                  img_products: {
+                    create: img_Products.map((img) => ({
+                      state_image: img.state_image,
+                      alt: img.alt,
+                      url: img.url,
+                    })),
+                  },
+                }
+              : {
+                  img_products: {
+                    update: img_Products.map((img) => ({
+                      where: {
+                        id: img.id,
+                      },
+                      data: {
+                        state_image: img.state_image,
+                        alt: img.alt,
+                        url: img.url,
+                      },
+                    })),
+                  },
+                })),
+          ...(img_Products !== undefined &&
+            img_Products.some(
+              (img) => img.delete === true && img.id !== null,
+            ) && {
+              img_products: {
+                deleteMany: {
+                  id: {
+                    in: img_Products
+                      .filter((img) => img.delete === true && img.id !== null)
+                      .map((img) => img.id),
+                  },
+                },
+              },
+            }),
+        },
+      });
+      return await this.findOne(id);
+    } catch (error) {
+      console.log(error);
+      throw new RpcException({ status: 500, message: 'Internal Server error' });
+    }
   }
 
   // TODO:Encontart Categoria
@@ -603,7 +671,10 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         });
       }
 
-      if (product.quantity > prod.inStock && !product.isFind) {
+      if (
+        product.quantity > prod.inStock ||
+        (prod.inStock === 0 && !product.isFind)
+      ) {
         throw new RpcException({
           status: 400,
           message: `No hay suficientes productos en el stock para el producto ${prod.slug}`,
@@ -620,6 +691,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     try {
       const ids: number[] = updateProductStock.map((prod) => prod.id);
 
+      console.log(ids);
       const products = await this.validateProducts(updateProductStock);
 
       const updateStock = products.map((prod) => {
@@ -632,7 +704,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
           });
         }
 
-        if (product.quantity > prod.inStock) {
+        if (prod.inStock === 0 || product.quantity > prod.inStock) {
           throw new RpcException({
             status: 400,
             message: `No hay suficientes productos en el stock para el producto ${prod.slug}`,
@@ -644,6 +716,12 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
         };
       });
 
+      console.log(
+        updateStock.map((prod) => ({
+          id: prod.id,
+          inStock: prod.inStock,
+        })),
+      );
       await Promise.all(
         updateStock.map((prod) =>
           this.product.update({
