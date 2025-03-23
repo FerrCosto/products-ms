@@ -740,4 +740,28 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       });
     }
   }
+
+  // TODO: Busqueda de cantidades de productos
+  async countProduct() {
+    try {
+      const [totalProducts, neverInStock, productsLessThenFive] =
+        await Promise.all([
+          this.product.count(),
+          this.product.count({ where: { inStock: { equals: 0 } } }),
+          this.product.count({ where: { inStock: { lte: 5 } } }),
+        ]);
+
+      return {
+        totalProducts,
+        neverInStock,
+        productsLessThenFive,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new RpcException({
+        status: 500,
+        message: 'Mirar los logs',
+      });
+    }
+  }
 }

@@ -75,6 +75,11 @@ export class ProductsController {
     return this.productsService.validateProducts(updateProductStockDto);
   }
 
+  @MessagePattern('products.count')
+  countProducts() {
+    return this.productsService.countProduct();
+  }
+
   @EventPattern('product.updateStock')
   updateStock(updateProductStockDto: UpdateProductStockDto[]) {
     return this.productsService.updateStockProduct(updateProductStockDto);
