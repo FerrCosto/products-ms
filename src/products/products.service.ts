@@ -672,8 +672,9 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       }
 
       if (
-        product.quantity > prod.inStock ||
-        (prod.inStock === 0 && !product.isFind)
+        updateProductStock.some((info) => !info.isFind) &&
+        (product.quantity > prod.inStock ||
+          (prod.inStock === 0 && !product.isFind))
       ) {
         throw new RpcException({
           status: 400,
